@@ -1,16 +1,14 @@
 
 import './App.css'
-import CalendarApp from './components/Calendar/Calendar'
+import CalendarApp from './components/Calendar/CalendarApp'
 
 
 function App() {
 
   return (
-    <>
-      <div>
+      <div className=' flex min-h-screen w-full items-center justify-center'>
         <CalendarApp/>
       </div>
-    </>
   )
 }
 
