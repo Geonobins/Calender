@@ -1,18 +1,20 @@
 import { format, parseISO } from 'date-fns';
 import { CalendarEvent } from '../Calendar/types/CalendarEvent'
+import { Trash2 } from 'lucide-react';
 
 interface EventListProps {
   selectedDay: Date;
   events: CalendarEvent[];
+  handleDeleteEvent: (eventId: string) => void;
 }
 
-export const EventList = ({ selectedDay, events } :EventListProps )  => {
+export const EventList = ({ selectedDay, events, handleDeleteEvent } :EventListProps )  => {
   const formatDate = (date?: string) => {
     return date ? format(parseISO(date), 'h:mm a') : 'Unknown Time';
   };
 
   return (
-    <section className="mt-12 md:mt-0 md:pl-14">
+    <section className="mt-12 md:mt-0 md:pl-14 overflow-y-auto max-h-[150px] sm:max-h-[300px]">
       <h2 className="font-semibold text-gray-900">
         Schedule for{' '}
         <time dateTime={format(selectedDay, 'yyyy-MM-dd')}>
@@ -22,7 +24,8 @@ export const EventList = ({ selectedDay, events } :EventListProps )  => {
       <ol className="mt-4 space-y-1 text-sm leading-6 text-gray-500">
         {events.length > 0 ? (
           events.map((event) => (
-            <li key={event.id} className="flex items-center space-x-2">
+            <li key={event.id} className="flex items-center space-x-2 ">
+              <div className='flex flex-1 gap-4 '>
               <img
                 src={event.creator.photoUrl || "https://via.placeholder.com/32"}
                 alt={event.creator.displayName}
@@ -35,6 +38,8 @@ export const EventList = ({ selectedDay, events } :EventListProps )  => {
                   {formatDate(event.end.dateTime || event.end.date)}
                 </p>
               </div>
+              </div>
+              <Trash2 className=' hover:bg-slate-200 py-1 hover:shadow-md rounded-lg size-[30px]' onClick={() => handleDeleteEvent(event.id)}/>
             </li>
           ))
         ) : (

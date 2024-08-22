@@ -7,7 +7,9 @@ export default defineConfig(({ mode }) => {
   return {
     define: {
       'process.env.CLIENT_ID': JSON.stringify(env.CLIENT_ID),
-      'process.env.API_KEY': JSON.stringify(env.API_KEY)
+      'process.env.API_KEY': JSON.stringify(env.API_KEY),
+      'process.env.OUTLOOK_CLIENT_ID': JSON.stringify(env.OUTLOOK_CLIENT_ID),
+      'process.env.OUTLOOK_CLIENT_SECRET': JSON.stringify(env.OUTLOOK_CLIENT_SECRET)
     },
     plugins: [react()],
   }
