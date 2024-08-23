@@ -26,7 +26,7 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent } :EventListP
           events.map((event) => (
             <li key={event.id} className="flex items-center space-x-2 ">
               <div className='flex flex-1 gap-4 '>
-              <img src={event.creator?.photoUrl || "https://via.placeholder.com/32"} alt="Creator" />
+              <img className='size-10' src={event.creator?.photoUrl || "https://via.placeholder.com/32"} alt="Creator" />
         
               <div>
                 <p className="font-medium text-gray-900">{event.summary}</p>

@@ -64,35 +64,42 @@ export default function CalendarApp() {
     }
   }, [pca]);
   
+  const loadEvents = async (day: Date) => {
+    const googleEvents = isGoogleSignedIn ? await loadGoogleEvents(day) : [];
+    const outlookEvents = isOutlookSignedIn ? await loadOutlookEvents(day) : [];
+    
+    // Combine and set events
+    setEvents([...googleEvents, ...outlookEvents]);
+  };
+
   useEffect(() => {
-    if (isGoogleSignedIn) {
-      loadGoogleEvents(selectedDay);
-    } else if (isOutlookSignedIn) {
-      loadOutlookEvents(selectedDay);
+    if (isGoogleSignedIn || isOutlookSignedIn) {
+      loadEvents(selectedDay);
     }
   }, [selectedDay, isGoogleSignedIn, isOutlookSignedIn, accessToken]);
+
   
-  const loadOutlookEvents = async (selectedDay: Date) => {
+  const loadOutlookEvents = async (day: Date) => {
     if (!accessToken) {
       console.error('No access token available');
-      return;
+      return [];
     }
   
     const graphClient = createGraphClient(accessToken);
-    
-    const startDateTime = new Date(selectedDay.getTime()).setHours(0, 0, 0, 0);
-    const endDateTime = new Date(selectedDay.getTime()).setHours(23, 59, 59, 999);
-
+    const startDateTime = new Date(day.getTime()).setHours(0, 0, 0, 0);
+    const endDateTime = new Date(day.getTime()).setHours(23, 59, 59, 999);
+  
     try {
       const response = await graphClient
-        .api('/me/calendar/events')
+        .api('/me/calendarview')
         .header('Prefer', 'outlook.timezone="UTC"')
+        .query({
+          startDateTime: new Date(startDateTime).toISOString(),
+          endDateTime: new Date(endDateTime).toISOString(),
+        })
         .get();
   
-      console.log("Outlook events:", response);
-  
-      // Transform the events to the desired format
-      const transformedEvents = response.value?.map((event: any) => ({
+      return response.value?.map((event: any) => ({
         id: event.id,
         summary: event.subject,
         start: {
@@ -106,13 +113,12 @@ export default function CalendarApp() {
         creator: {
           name: event.organizer?.emailAddress?.name || 'Unknown',
           email: event.organizer?.emailAddress?.address,
-          photoUrl: '', // Outlook doesn't provide photo URLs, so you can set a default or handle this elsewhere
+          photoUrl: OutlookIcon, // Set Outlook icon as photoUrl
         },
       })) || [];
-  
-      setEvents(transformedEvents);
     } catch (error) {
       console.error('Error fetching Outlook events:', error);
+      return [];
     }
   };
   
@@ -120,7 +126,7 @@ export default function CalendarApp() {
   const loadGoogleEvents = async (date: Date) => {
     const startDate = new Date(date.getTime()).setHours(0, 0, 0, 0);
     const endDate = new Date(date.getTime()).setHours(23, 59, 59, 999);
-
+  
     try {
       const response = await gapi.client.calendar.events.list({
         calendarId: 'primary',
@@ -129,10 +135,27 @@ export default function CalendarApp() {
         singleEvents: true,
         orderBy: 'startTime',
       });
-      
-      setEvents(response.result.items || []); // Load events or an empty array if no events
+  
+      return response.result.items.map((event: any) => ({
+        id: event.id,
+        summary: event.summary,
+        start: {
+          dateTime: event.start?.dateTime,
+          date: event.start?.date,
+        },
+        end: {
+          dateTime: event.end?.dateTime,
+          date: event.end?.date,
+        },
+        creator: {
+          name: event.creator?.email || 'Unknown',
+          email: event.creator?.email,
+          photoUrl: GoogleIcon, // Set Google icon as photoUrl
+        },
+      })) || [];
     } catch (error) {
       console.error('Error fetching Google events:', error);
+      return [];
     }
   };
 

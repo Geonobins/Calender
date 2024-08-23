@@ -1,4 +1,3 @@
-// gapiClient.ts
 import { gapi } from 'gapi-script';
 
 export const initializeGapi = (CLIENT_ID: string, API_KEY: string, DISCOVERY_DOCS: string[], SCOPES: string, onSuccess: () => void) => {
@@ -13,7 +12,8 @@ export const initializeGapi = (CLIENT_ID: string, API_KEY: string, DISCOVERY_DOC
       if (authInstance.isSignedIn.get()) {
         onSuccess();  // Load events or any other task after successful login
       } else {
-        authInstance.signIn().then(onSuccess);
+        // Optional: handle cases where sign-in might be needed but not automatically
+        console.log('User is not signed in. Consider prompting the user to sign in.');
       }
     }).catch((error: any) => {
       console.error("Error initializing gapi:", error);
