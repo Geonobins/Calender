@@ -4,10 +4,11 @@ import { PublicClientApplication } from "@azure/msal-browser";
 import { SetStateAction } from "react";
 
 export const initializeMsal = async (setPca: { (value: SetStateAction<PublicClientApplication | null>): void; (arg0: PublicClientApplication): void; }) => {
-    const msalInstance = new PublicClientApplication({
+  console.log("tenantid",process.env.OUTLOOK_TENENT_ID)  
+  const msalInstance = new PublicClientApplication({
       auth: {
         clientId: process.env.OUTLOOK_CLIENT_ID!,
-        authority: "https://login.microsoftonline.com/common", // Change to 'common' to allow both personal and work/school accounts
+        authority: `https://login.microsoftonline.com/common`, // Change to 'common' to allow both personal and work/school accounts
         redirectUri: "http://localhost:5173",
         
       },
