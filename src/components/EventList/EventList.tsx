@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { CalendarEvent } from '../Calendar/types/CalendarEvent';
 import { Loader2, Trash2 } from 'lucide-react';
+import clsx from 'clsx'; // For conditional classes
 
 interface EventListProps {
   selectedDay: Date;
@@ -10,8 +11,7 @@ interface EventListProps {
   loading: boolean;
 }
 
-
-export const EventList = ({ selectedDay, events, handleDeleteEvent,loading }: EventListProps) => {
+export const EventList = ({ selectedDay, events, handleDeleteEvent, loading }: EventListProps) => {
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
 
   const formatDate = (date?: string) => {
@@ -21,13 +21,14 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent,loading }: Ev
   const toggleExpand = (eventId: string) => {
     setExpandedEventId(expandedEventId === eventId ? null : eventId);
   };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center  ">
-      <div className="spinner-border animate-spin " role="status">
-          <Loader2/>
+      <div className="flex items-center justify-center">
+        <div className="spinner-border animate-spin" role="status">
+          <Loader2 />
+        </div>
       </div>
-  </div>
     );
   }
 
@@ -50,7 +51,7 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent,loading }: Ev
                 <div className="flex flex-1 gap-4">
                   <img
                     className="size-10"
-                    src={event.creator?.photoUrl || "https://via.placeholder.com/32"}
+                    src={event.creator?.photoUrl || 'https://via.placeholder.com/32'}
                     alt="Creator"
                   />
                   <div>
@@ -66,7 +67,12 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent,loading }: Ev
                   onClick={() => handleDeleteEvent(event.id)}
                 />
               </div>
-              {expandedEventId === event.id && (
+              <div
+                className={clsx(
+                  'transition-all duration-300 ease-in-out overflow-hidden',
+                  expandedEventId === event.id ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+                )}
+              >
                 <div className="mt-2 p-2 bg-gray-100 rounded-md">
                   <p>
                     <strong>Description:</strong> {event.description}
@@ -75,7 +81,7 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent,loading }: Ev
                     <strong>Location:</strong> {event.location}
                   </p>
                 </div>
-              )}
+              </div>
             </li>
           ))
         ) : (
