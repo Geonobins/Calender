@@ -26,12 +26,14 @@ export default function CalendarApp() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pca, setPca] = useState<PublicClientApplication | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  
+  const [loading, setLoading] = useState(false);
+
   const CLIENT_ID = process.env.CLIENT_ID!;
   const API_KEY = process.env.API_KEY!;
   const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'];
   const SCOPES = 'https://www.googleapis.com/auth/calendar';
-
+  console.log("client",CLIENT_ID)
+  console.log("api",API_KEY)
   const createGraphClient = (token: string) => {
     return Client.init({
       authProvider: (done) => {
@@ -49,6 +51,7 @@ export default function CalendarApp() {
   }, []);
 
   useEffect(() => {
+    
     // Handle Google sign-in status
     const authInstance = gapi.auth2?.getAuthInstance();
     if (authInstance && authInstance.isSignedIn.get()) {
@@ -65,11 +68,13 @@ export default function CalendarApp() {
   }, [pca]);
   
   const loadEvents = async (day: Date) => {
+    setLoading(true);
     const googleEvents = isGoogleSignedIn ? await loadGoogleEvents(day) : [];
     const outlookEvents = isOutlookSignedIn ? await loadOutlookEvents(day) : [];
     
     // Combine and set events
     setEvents([...googleEvents, ...outlookEvents]);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -98,7 +103,7 @@ export default function CalendarApp() {
           endDateTime: new Date(endDateTime).toISOString(),
         })
         .get();
-  
+        console.log("outlookres",response)
       return response.value?.map((event: any) => ({
         id: event.id,
         summary: event.subject,
@@ -115,6 +120,8 @@ export default function CalendarApp() {
           email: event.organizer?.emailAddress?.address,
           photoUrl: OutlookIcon, // Set Outlook icon as photoUrl
         },
+        description: event.bodyPreview || 'No description provided', // Fetch description
+    location: event.location?.displayName || 'No location provided', 
       })) || [];
     } catch (error) {
       console.error('Error fetching Outlook events:', error);
@@ -152,6 +159,8 @@ export default function CalendarApp() {
           email: event.creator?.email,
           photoUrl: GoogleIcon, // Set Google icon as photoUrl
         },
+        description: event.description || 'No description provided', // Add description
+        location: event.location || 'No location provided', // Add location
       })) || [];
     } catch (error) {
       console.error('Error fetching Google events:', error);
@@ -252,7 +261,7 @@ export default function CalendarApp() {
             />
             <AddEventButton handleAddButton={handleAddButton} />
           </div>
-          <EventList events={events? events:[]} selectedDay={selectedDay} handleDeleteEvent={handleDeleteEvent} />
+          <EventList events={events? events:[]} selectedDay={selectedDay} handleDeleteEvent={handleDeleteEvent} loading={loading}  />
         </div>
         {
           isModalOpen &&

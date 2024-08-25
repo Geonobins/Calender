@@ -13,13 +13,16 @@ export const handleGoogleLogin = async (
   const authInstance = gapi.auth2.getAuthInstance();
 
   if (authInstance.isSignedIn.get()) {
+    
     // Sign out if already signed in
     authInstance.signOut().then(() => {
       setIsGoogleSignedIn(false); // Set to false on sign-out
     });
   } else {
+    console.log("before signing in")
     // Sign in if not signed in
     authInstance.signIn().then(() => {
+      console.log("Hello..u are signed in")
       setIsGoogleSignedIn(true); // Set to true on sign-in
       loadGoogleEvents(selectedDay); // Load Google events
     });
