@@ -209,15 +209,16 @@ export default function CalendarApp() {
   };
 
   const handleDeleteEvent = async (eventId: string) => {
-    try {
-      const request = gapi.client.calendar.events.delete({
-        calendarId: 'primary',
-        eventId: eventId,
-      });
-      request.execute(() => loadGoogleEvents(selectedDay)); // Reload events after deleting
-    } catch (error) {
-      console.error('Error deleting event:', error);
-    }
+    console.log("event deleted",eventId)
+    // try {
+    //   const request = gapi.client.calendar.events.delete({
+    //     calendarId: 'primary',
+    //     eventId: eventId,
+    //   });
+    //   request.execute(() => loadGoogleEvents(selectedDay)); // Reload events after deleting
+    // } catch (error) {
+    //   console.error('Error deleting event:', error);
+    // }
   };
 
   const handleAddButton = () => {

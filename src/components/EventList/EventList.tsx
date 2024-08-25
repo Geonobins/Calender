@@ -21,6 +21,10 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading }: E
   const toggleExpand = (eventId: string) => {
     setExpandedEventId(expandedEventId === eventId ? null : eventId);
   };
+  const handleDeleteClick = (eventId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the click event from bubbling up to the parent
+    handleDeleteEvent(eventId);
+  };
 
   if (loading) {
     return (
@@ -45,7 +49,7 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading }: E
           events.map((event) => (
             <li key={event.id} className="flex flex-col space-y-1">
               <div
-                className="flex items-center space-x-2 cursor-pointer"
+                className="flex items-center space-x-2 cursor-pointer p-2 rounded-2xl hover:bg-gray-100 duration-500"
                 onClick={() => toggleExpand(event.id)}
               >
                 <div className="flex flex-1 gap-4">
@@ -63,8 +67,8 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading }: E
                   </div>
                 </div>
                 <Trash2
-                  className="hover:bg-slate-200 py-1 hover:shadow-md rounded-lg size-[30px]"
-                  onClick={() => handleDeleteEvent(event.id)}
+                  className="hover:bg-slate-200 py-1 hover:shadow-md hover:text-red-400 hover:-translate-y-0.5 duration-500 rounded-lg size-[30px]"
+                  onClick={(e) => handleDeleteClick(event.id,e)}
                 />
               </div>
               <div
