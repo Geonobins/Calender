@@ -13,8 +13,8 @@ import OutlookIcon from '../../assets/icons/outlook.svg';
 import { initializeMsal } from '../../services/msalClient';
 import { initializeGapi } from '../../services/gapiClient';
 import { handleGoogleLogin, handleOutlookLogin } from '../../services/authUtils'; 
-import { Client } from '@microsoft/microsoft-graph-client';
-
+import { loadGoogleEvents } from '../../services/loadGoogleEvents';
+import { loadOutlookEvents } from '../../services/loadOutlookEvents';
 
 export default function CalendarApp() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -27,31 +27,23 @@ export default function CalendarApp() {
   const [pca, setPca] = useState<PublicClientApplication | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]); // State for filtered events
+
 
   const CLIENT_ID = process.env.CLIENT_ID!;
   const API_KEY = process.env.API_KEY!;
   const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'];
   const SCOPES = 'https://www.googleapis.com/auth/calendar';
-  console.log("client",CLIENT_ID)
-  console.log("api",API_KEY)
-  const createGraphClient = (token: string) => {
-    return Client.init({
-      authProvider: (done) => {
-        done(null, token); // Pass the access token to the auth provider
-      },
-    });
-  };
-  
+
   useEffect(() => {
     // Initialize both MSAL and GAPI
     initializeMsal(setPca); // Initialize MSAL and set the public client application
     initializeGapi(CLIENT_ID, API_KEY, DISCOVERY_DOCS, SCOPES, () => {
-      loadGoogleEvents(selectedDay);  // Load Google events only after GAPI initialization
+       // Load Google events only after GAPI initialization
     });
   }, []);
 
   useEffect(() => {
-    
     // Handle Google sign-in status
     const authInstance = gapi.auth2?.getAuthInstance();
     if (authInstance && authInstance.isSignedIn.get()) {
@@ -59,118 +51,47 @@ export default function CalendarApp() {
     } else {
       setIsGoogleSignedIn(false);
     }
-  
+
     // Handle Outlook sign-in status
     if (pca) {
       const activeAccount = pca.getActiveAccount();
       setIsOutlookSignedIn(!!activeAccount); // If there is an active account, the user is signed in
     }
   }, [pca]);
-  
-  const loadEvents = async (day: Date) => {
+
+  const loadEvents = async () => {
     setLoading(true);
-    const googleEvents = isGoogleSignedIn ? await loadGoogleEvents(day) : [];
-    const outlookEvents = isOutlookSignedIn ? await loadOutlookEvents(day) : [];
     
+    const googleEvents = isGoogleSignedIn ? await loadGoogleEvents(firstDayCurrentMonth) : [];
+    const outlookEvents = isOutlookSignedIn && accessToken ? await loadOutlookEvents(firstDayCurrentMonth, accessToken) : [];
+  
     // Combine and set events
     setEvents([...googleEvents, ...outlookEvents]);
     setLoading(false);
   };
+  const filterEventsForDay = (events: CalendarEvent[], day: Date) => {
+    const filtered = events.filter(event => {
+      const eventDateTime = event.start.dateTime ? new Date(event.start.dateTime) : null;
+      const eventDate = event.start.date ? new Date(event.start.date) : null;
+  
+      // Check if either eventDateTime or eventDate is not null
+      return (eventDateTime && eventDateTime.toDateString() === day.toDateString()) || 
+             (eventDate && eventDate.toDateString() === day.toDateString());
+    });
+    setFilteredEvents(filtered);
+    console.log("eventsforday",filteredEvents)
+  };
+  
 
   useEffect(() => {
     if (isGoogleSignedIn || isOutlookSignedIn) {
-      loadEvents(selectedDay);
+      loadEvents();
     }
-  }, [selectedDay, isGoogleSignedIn, isOutlookSignedIn, accessToken]);
+  }, [ currentMonth,isGoogleSignedIn, isOutlookSignedIn, accessToken]);
 
-  
-  const loadOutlookEvents = async (day: Date) => {
-    if (!accessToken) {
-      console.error('No access token available');
-      return [];
-    }
-  
-    const graphClient = createGraphClient(accessToken);
-    const startDateTime = new Date(day.getTime()).setHours(0, 0, 0, 0);
-    const endDateTime = new Date(day.getTime()).setHours(23, 59, 59, 999);
-  
-    try {
-      const response = await graphClient
-        .api('/me/calendarview')
-        .header('Prefer', 'outlook.timezone="UTC"')
-        .query({
-          startDateTime: new Date(startDateTime).toISOString(),
-          endDateTime: new Date(endDateTime).toISOString(),
-        })
-        .get();
-        console.log("outlookres",response)
-      return response.value?.map((event: any) => ({
-        id: event.id,
-        summary: event.subject,
-        start: {
-          dateTime: event.start?.dateTime,
-          date: event.start?.date,
-        },
-        end: {
-          dateTime: event.end?.dateTime,
-          date: event.end?.date,
-        },
-        creator: {
-          name: event.organizer?.emailAddress?.name || 'Unknown',
-          email: event.organizer?.emailAddress?.address,
-          photoUrl: OutlookIcon, // Set Outlook icon as photoUrl
-        },
-        description: event.bodyPreview || 'No description provided', // Fetch description
-    location: event.location?.displayName || 'No location provided', 
-      })) || [];
-    } catch (error) {
-      console.error('Error fetching Outlook events:', error);
-      return [];
-    }
-  };
-  
-  
-  const loadGoogleEvents = async (date: Date) => {
-    const startDate = new Date(date.getTime()).setHours(0, 0, 0, 0);
-    const endDate = new Date(date.getTime()).setHours(23, 59, 59, 999);
-  
-    try {
-      const response = await gapi.client.calendar.events.list({
-        calendarId: 'primary',
-        timeMin: new Date(startDate).toISOString(),
-        timeMax: new Date(endDate).toISOString(),
-        singleEvents: true,
-        orderBy: 'startTime',
-      });
-  
-      return response.result.items.map((event: any) => ({
-        id: event.id,
-        summary: event.summary,
-        start: {
-          dateTime: event.start?.dateTime,
-          date: event.start?.date,
-        },
-        end: {
-          dateTime: event.end?.dateTime,
-          date: event.end?.date,
-        },
-        creator: {
-          name: event.creator?.email || 'Unknown',
-          email: event.creator?.email,
-          photoUrl: GoogleIcon, // Set Google icon as photoUrl
-        },
-        description: event.description || 'No description provided', // Add description
-        location: event.location || 'No location provided', // Add location
-      })) || [];
-    } catch (error) {
-      console.error('Error fetching Google events:', error);
-      return [];
-    }
-  };
-
-  const handleDayClick = (day: Date) => {
-    setSelectedDay(day);
-  };
+  useEffect(() => {
+    filterEventsForDay(events, selectedDay); // Filter events whenever the selected day changes
+  }, [events, selectedDay]);
 
   const previousMonth = () => {
     const firstDayPreviousMonth = add(firstDayCurrentMonth, { months: -1 });
@@ -209,7 +130,8 @@ export default function CalendarApp() {
   };
 
   const handleDeleteEvent = async (eventId: string) => {
-    console.log("event deleted",eventId)
+    console.log("eventId",eventId)
+    // Uncomment below code when deleting events is necessary
     // try {
     //   const request = gapi.client.calendar.events.delete({
     //     calendarId: 'primary',
@@ -226,7 +148,7 @@ export default function CalendarApp() {
   };
 
   return (
-    <div className=' w-screen h-screen flex flex-col items-center justify-center'>
+    <div className='w-screen h-screen flex flex-col items-center justify-center'>
       <div className="absolute top-4 right-4 flex space-x-2 z-50">
         <button className="btn btn-primary" onClick={() => handleGoogleLogin(setIsGoogleSignedIn, loadGoogleEvents, selectedDay)}>
           <img
@@ -236,7 +158,7 @@ export default function CalendarApp() {
           />
         </button>
 
-        <button onClick={() => {handleOutlookLogin(pca, setIsOutlookSignedIn,setAccessToken)}} className="btn btn-primary">
+        <button onClick={() => { handleOutlookLogin(pca, setIsOutlookSignedIn, setAccessToken) }} className="btn btn-primary">
           <img
             src={OutlookIcon}
             className={`w-[80%] ${isOutlookSignedIn ? '' : 'grayscale'}`}
@@ -245,9 +167,8 @@ export default function CalendarApp() {
         </button>
       </div>
 
-
       <div className="pt-16 min-w-[80%] min-h-[600px] px-4 mx-auto sm:px-7 md:max-w-4xl md:px-6 bg-white z-40 border rounded-md shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 md:divide-x md:divide-gray-200  items-center justify-center z-40">
+        <div className="grid grid-cols-1 md:grid-cols-2 md:divide-x md:divide-gray-200 items-center justify-center z-40">
           <div className="md:pr-14 flex flex-col rounded-lg p-6 shadow-lg">
             <CalendarHeader
               currentMonth={firstDayCurrentMonth}
@@ -257,21 +178,20 @@ export default function CalendarApp() {
             <CalendarGrid
               firstDayOfMonth={firstDayCurrentMonth}
               selectedDay={selectedDay}
-              events={events?events:[]}
-              handleDayClick={handleDayClick}
+              events={events}
+              handleDayClick={setSelectedDay}
             />
             <AddEventButton handleAddButton={handleAddButton} />
           </div>
-          <EventList events={events? events:[]} selectedDay={selectedDay} handleDeleteEvent={handleDeleteEvent} loading={loading}  />
+          <EventList events={filteredEvents} selectedDay={selectedDay} handleDeleteEvent={handleDeleteEvent} loading={loading} />
         </div>
-        {
-          isModalOpen &&
+        {isModalOpen && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
             onClick={() => setIsModalOpen(false)}
           >
             <div
-              className="bg-white  rounded-lg shadow-lg"
+              className="bg-white rounded-lg shadow-lg"
               onClick={(event) => event.stopPropagation()}
             >
               <EventModal
@@ -279,7 +199,8 @@ export default function CalendarApp() {
                 onSubmit={handleAddEvent}
               />
             </div>
-          </div>}
+          </div>
+        )}
       </div>
     </div>
   );
