@@ -13,6 +13,10 @@ export const loadGoogleEvents = async (monthStart: Date): Promise<CalendarEvent[
       timeMax: new Date(endDate).toISOString(),
       singleEvents: true,
       orderBy: 'startTime',
+      headers: {
+        'Accept-Encoding': 'gzip', // Request gzip-encoded response
+        'User-Agent': 'my program (gzip)' // Optional, but can be helpful
+    }
     });
 
     return response.result.items.map((event: any) => ({
