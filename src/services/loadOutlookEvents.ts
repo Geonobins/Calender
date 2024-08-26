@@ -18,7 +18,7 @@ export const loadOutlookEvents = async (monthStart: Date, accessToken: string): 
   try {
     const response = await graphClient
       .api('/me/calendarview')
-      .header('Prefer', 'outlook.timezone="UTC"')
+      .header('Prefer', 'outlook.timezone="Asia/Kolkata"')
       .header('Accept-Encoding', 'gzip')
       .query({
         startDateTime: new Date(startDateTime).toISOString(),

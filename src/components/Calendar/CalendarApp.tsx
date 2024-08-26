@@ -29,6 +29,7 @@ export default function CalendarApp() {
   const [loading, setLoading] = useState(false);
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]); // State for filtered events
 
+  
 
   const CLIENT_ID = process.env.CLIENT_ID!;
   const API_KEY = process.env.API_KEY!;
@@ -148,7 +149,7 @@ export default function CalendarApp() {
   };
 
   return (
-    <div className='w-screen h-screen flex flex-col items-center justify-center'>
+    <div className='w-screen min-h-full flex flex-col items-center justify-center'>
       <div className="absolute top-4 right-4 flex space-x-2 z-50">
         <button className="btn btn-primary" onClick={() => handleGoogleLogin(setIsGoogleSignedIn, loadGoogleEvents, selectedDay)}>
           <img
@@ -157,7 +158,7 @@ export default function CalendarApp() {
             alt="Google Login"
           />
         </button>
-
+  
         <button onClick={() => { handleOutlookLogin(pca, setIsOutlookSignedIn, setAccessToken) }} className="btn btn-primary">
           <img
             src={OutlookIcon}
@@ -166,8 +167,8 @@ export default function CalendarApp() {
           />
         </button>
       </div>
-
-      <div className="pt-16 min-w-[80%] min-h-[600px] px-4 mx-auto sm:px-7 md:max-w-4xl md:px-6 bg-white z-40 border rounded-md shadow-sm">
+  
+      <div className="pt-16 min-w-[80%] h-full  sm:min-h-[600px] px-4 mx-auto sm:px-7 md:max-w-4xl md:px-6 bg-white z-40 border rounded-md shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-2 md:divide-x md:divide-gray-200 items-center justify-center z-40">
           <div className="md:pr-14 flex flex-col rounded-lg p-6 shadow-lg">
             <CalendarHeader

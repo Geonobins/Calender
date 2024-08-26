@@ -6,7 +6,7 @@ import CalendarApp from './components/Calendar/CalendarApp'
 function App() {
 
   return (
-      <div className=' flex min-h-screen w-full items-center justify-center'>
+      <div className='min-h-screen flex justify-center items-center'>
         <CalendarApp/>
       </div>
   )
