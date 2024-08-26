@@ -103,14 +103,14 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading }: E
       
         <div className='flex gap-2 flex-wrap'>
           {availableTimeSlots.map((slot, index) => (
-            <div key={index} className="p-2 bg-white border rounded-md shadow-sm">
+            <div key={index} className="p-2 bg-red-100 cursor-pointer hover:bg-red-200  rounded-2xl shadow-sm">
               {formatTimeSlot(slot)}
             </div>
           ))}
         </div>
 
       {view === 'list' ? (
-      <ol className="mt-4 space-y-1 text-sm max-h-[100px] sm:max-h-[300px] leading-6 overflow-y-auto text-gray-500">
+      <ol className="mt-4 space-y-1 text-sm max-h-[100px] sm:max-h-[200px] leading-6 overflow-y-auto text-gray-500">
         {sortedEvents.length > 0 ? (
           sortedEvents.map((event) => (
             <li key={event.id} className="flex flex-col space-y-1">
@@ -159,7 +159,7 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading }: E
         )}
       </ol>):
       (
-        <div className="grid grid-cols-1 gap-4 overflow-y-auto max-h-[100px] sm:max-h-[300px] ">
+        <div className="grid grid-cols-1 gap-4 overflow-y-auto max-h-[100px] sm:max-h-[200px] ">
           {timeSlots.map(({ start, end }, index) => (
             <div key={index} className="p-4 border rounded-md">
               <h3>{`${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`}</h3>
