@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format, parseISO, isAfter, startOfHour, addHours, isBefore, endOfHour, addMinutes } from 'date-fns';
+import { format, parseISO, isAfter, startOfHour, isBefore, endOfHour, addMinutes, endOfDay } from 'date-fns';
 import { CalendarEvent } from '../Calendar/types/CalendarEvent';
 import { Loader2, Trash2, ViewIcon } from 'lucide-react';
 import clsx from 'clsx'; // For conditional classes
@@ -19,12 +19,21 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading, han
 
   const [timeSlotInterval, setTimeSlotInterval] = useState(60); // Default to 60 minutes
 
-  // Generate time slots based on the selected interval
-  const timeSlots = Array.from({ length: 24 }, (_, index) => {
-    const start = startOfHour(addHours(selectedDay, index));
-    const end = addMinutes(start, timeSlotInterval);
-    return { start, end };
-  });
+  const generateTimeSlots = (interval: number) => {
+    const slots = [];
+    let currentTime = startOfHour(selectedDay); // Start from the beginning of the selected day
+    console.log("endofhr",endOfDay(selectedDay))
+    // Generate slots for the entire day
+    while (currentTime < endOfDay(selectedDay)) {
+      const endTime = addMinutes(currentTime, interval);
+      slots.push({ start: currentTime, end: endTime });
+      currentTime = endTime; // Move to the next slot
+    }
+
+    return slots;
+  };
+
+  const timeSlots = generateTimeSlots(timeSlotInterval); 
 
   const toggleView = () => {
     setView(view === 'list' ? 'timeSlot' : 'list');
@@ -97,7 +106,25 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading, han
   return (
     <section className="mt-12 md:mt-0 md:pl-14  max-h-[150px] sm:max-h-[300px]">
       
-      <h2 className="font-semibold text-gray-900 flex gap-3">
+      <div className='flex justify-center items-center'>
+      <div className="flex-1 font-semibold text-gray-900 flex gap-2 pb-3">
+      Available slots:
+      </div>
+      <div className='flex gap-3'>
+        <button onClick={()=>setTimeSlotInterval(60)} className=' border-2 p-0.5 px-1 rounded-xl hover:bg-slate-200 font-light text-md'>1hr</button>      
+        <button onClick={()=>setTimeSlotInterval(30)} className='border-2 p-0.5 px-1 rounded-xl hover:bg-slate-200 font-light text-md'>30 min</button>
+        <button onClick={()=>setTimeSlotInterval(15)} className='border-2 p-0.5 px-1 rounded-xl hover:bg-slate-200 font-light text-md'>15 min</button>
+        </div>
+      </div>
+        <div className='flex gap-2 flex-wrap overflow-y-auto max-h-[150px] py-2 my-2 '>
+          {availableTimeSlots.map((slot, index) => (
+            <div key={index} className="p-2 bg-slate-100 cursor-pointer hover:bg-slate-200  rounded-2xl text-xs shadow-sm" onClick={()=>handleAddButton(slot.start,slot.end)}>
+              {formatTimeSlot(slot)}
+            </div>
+          ))}
+        </div>
+
+        <h2 className="font-semibold text-gray-900 flex gap-3">
         Schedule for{' '}
         <time dateTime={format(selectedDay, 'yyyy-MM-dd')}>
           {format(selectedDay, 'MMM dd, yyyy')}
@@ -106,20 +133,6 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading, han
         <ViewIcon/>
       </button>
       </h2>
-      <div className="font-semibold text-gray-900 flex gap-2 pb-3">Available slots:
-        <button onClick={()=>setTimeSlotInterval(60)}>1hr</button>
-        
-        <button onClick={()=>setTimeSlotInterval(30)}>30 min</button>
-        <button onClick={()=>setTimeSlotInterval(15)}>15 min</button>
-      </div>
-      
-        <div className='flex gap-2 flex-wrap overflow-y-auto max-h-[150px]'>
-          {availableTimeSlots.map((slot, index) => (
-            <div key={index} className="p-2 bg-red-100 cursor-pointer hover:bg-red-200  rounded-2xl shadow-sm" onClick={()=>handleAddButton(slot.start,slot.end)}>
-              {formatTimeSlot(slot)}
-            </div>
-          ))}
-        </div>
 
       {view === 'list' ? (
       <ol className="mt-4 space-y-1 text-sm max-h-[100px] sm:max-h-[200px] leading-6 overflow-y-auto text-gray-500">
@@ -181,8 +194,7 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading, han
               <h3>{`${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`}</h3>
               <ul>
                 {events
-                  .filter((event) => {
-                    
+                  .filter((event) => {         
                     const eventStartTime = getEventStartTime(event);
                     const eventEndTime = getEventEndTime(event);
                     return eventStartTime && eventEndTime && 

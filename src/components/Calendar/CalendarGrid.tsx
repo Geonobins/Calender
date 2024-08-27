@@ -34,7 +34,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({ firstDayOfMonth, sel
   
   return (
     <div>
-      <div className="grid grid-cols-7 text-xs leading-6 text-center text-gray-500">
+      <div className="grid grid-cols-7 text-md leading-6 text-center text-gray-500">
         {weekdays.map((day, index) => (
           <div key={index} className="py-1.5">
             {day}
@@ -42,7 +42,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({ firstDayOfMonth, sel
         ))}
       </div>
   
-      <div className="grid grid-cols-7 mt-2 text-sm">
+      <div className="grid grid-cols-7 mt-2 text-lg">
         {days.map((day, dayIdx) => (
           <div
             key={day.toString()}

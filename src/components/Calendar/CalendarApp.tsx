@@ -60,7 +60,7 @@ export default function CalendarApp() {
       const activeAccount = pca.getActiveAccount();
       setIsOutlookSignedIn(!!activeAccount); // If there is an active account, the user is signed in
     }
-  }, [pca]);
+  }, []);
 
   const loadEvents = async () => {
     setLoading(true);
@@ -87,9 +87,9 @@ export default function CalendarApp() {
   
 
   useEffect(() => {
-    if (isGoogleSignedIn || isOutlookSignedIn) {
+    
       loadEvents();
-    }
+    
   }, [ currentMonth,isGoogleSignedIn, isOutlookSignedIn, accessToken]);
 
   useEffect(() => {
@@ -157,7 +157,7 @@ export default function CalendarApp() {
   return (
     <div className='w-screen min-h-full flex flex-col items-center justify-center'>
       <div className="absolute top-4 right-4 flex space-x-2 z-50">
-        <button className="btn btn-primary" onClick={() => handleGoogleLogin(setIsGoogleSignedIn, loadGoogleEvents, selectedDay)}>
+        <button className="btn btn-primary hover:-translate-y-0.5 duration-300" onClick={() => handleGoogleLogin(setIsGoogleSignedIn, loadGoogleEvents, selectedDay)}>
           <img
             src={GoogleIcon}
             className={`w-[80%] ${isGoogleSignedIn ? '' : 'grayscale'}`}
@@ -165,7 +165,7 @@ export default function CalendarApp() {
           />
         </button>
   
-        <button onClick={() => { handleOutlookLogin(pca, setIsOutlookSignedIn, setAccessToken) }} className="btn btn-primary">
+        <button onClick={() => { handleOutlookLogin(pca, setIsOutlookSignedIn, setAccessToken) }} className="btn btn-primary hover:-translate-y-0.5 duration-300">
           <img
             src={OutlookIcon}
             className={`w-[80%] ${isOutlookSignedIn ? '' : 'grayscale'}`}
@@ -176,7 +176,7 @@ export default function CalendarApp() {
   
       <div className="pt-16 min-w-[90%] h-full  sm:min-h-[600px] px-4 mx-auto sm:px-7 md:max-w-4xl md:px-6 bg-white z-40 border rounded-md shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-2 md:divide-x md:divide-gray-200 items-center justify-center z-40">
-          <div className="md:pr-14 flex flex-col rounded-lg p-6 shadow-lg">
+          <div className="md:pr-14 flex flex-col gap-4 rounded-lg p-6 shadow-lg">
             <CalendarHeader
               currentMonth={firstDayCurrentMonth}
               previousMonth={previousMonth}
@@ -190,7 +190,9 @@ export default function CalendarApp() {
             />
             <AddEventButton handleAddButton={handleAddButton} />
           </div>
+          <div className=' h-full'>
           <EventList events={filteredEvents} selectedDay={selectedDay} handleDeleteEvent={handleDeleteEvent} loading={loading} handleAddButton={handleAddButton} />
+          </div>
         </div>
         {isModalOpen && (
           <div
