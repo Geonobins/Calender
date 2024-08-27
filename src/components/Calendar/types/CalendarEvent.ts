@@ -19,5 +19,5 @@ export interface CalendarEvent {
     };
     attendees?: { email: string }[];
     reminders?: { useDefault: boolean; overrides?: { method: string; minutes: number }[]; };
-    
+    eventSource:string
   }

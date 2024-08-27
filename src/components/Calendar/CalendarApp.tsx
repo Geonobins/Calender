@@ -13,8 +13,9 @@ import OutlookIcon from '../../assets/icons/outlook.svg';
 import { initializeMsal } from '../../services/msalClient';
 import { initializeGapi } from '../../services/gapiClient';
 import { handleGoogleLogin, handleOutlookLogin } from '../../services/authUtils'; 
-import { loadGoogleEvents } from '../../services/loadGoogleEvents';
-import { loadOutlookEvents } from '../../services/loadOutlookEvents';
+import { loadGoogleEvents, deleteGoogleEvent, addEventToGoogle } from '../../services/googleEvents';
+import { loadOutlookEvents, deleteOutlookEvent, addEventToOutlook } from '../../services/outlookEvents';
+
 
 export default function CalendarApp() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -29,7 +30,8 @@ export default function CalendarApp() {
   const [loading, setLoading] = useState(false);
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]); // State for filtered events
 
-  
+  const [modalStartTime,setModalStartTime] = useState<string>('');
+  const [modalEndTime,setModalEndTime] = useState<string>('');
 
   const CLIENT_ID = process.env.CLIENT_ID!;
   const API_KEY = process.env.API_KEY!;
@@ -106,45 +108,49 @@ export default function CalendarApp() {
     setSelectedDay(firstDayNextMonth);
   };
 
-  const handleAddEvent = async (eventData: { summary: string; location: string; description: string }) => {
-    const startDateTime = new Date(selectedDay);
-    startDateTime.setHours(9); // Start time: 9 AM
-    const endDateTime = new Date(selectedDay);
-    endDateTime.setHours(17); // End time: 5 PM
-
-    const addedEvent = {
-      summary: eventData.summary,
-      location: eventData.location,
-      description: eventData.description,
-      start: { dateTime: startDateTime.toISOString(), timeZone: 'America/Los_Angeles' },
-      end: { dateTime: endDateTime.toISOString(), timeZone: 'America/Los_Angeles' },
-      attendees: [{ email: 'example@example.com' }],
-      reminders: { useDefault: false, overrides: [{ method: 'email', minutes: 24 * 60 }, { method: 'popup', minutes: 10 }] },
-    };
-
-    const request = gapi.client.calendar.events.insert({
-      calendarId: 'primary',
-      resource: addedEvent,
-    });
-
-    request.execute(() => loadGoogleEvents(selectedDay)); // Reload events after adding
+  const handleAddEvent = async (eventData: { summary: string; location: string; description: string; startTime: string; endTime: string }) => {
+    // Add event to Google Calendar if signed in
+    if (isGoogleSignedIn) {
+      await addEventToGoogle(eventData, selectedDay);
+    }
+  
+    // Add event to Outlook Calendar if signed in
+    if (isOutlookSignedIn && accessToken) {
+      await addEventToOutlook(eventData, selectedDay, accessToken);
+    }
+    loadEvents();
   };
+  
 
-  const handleDeleteEvent = async (eventId: string) => {
-    console.log("eventId",eventId)
-    // Uncomment below code when deleting events is necessary
-    // try {
-    //   const request = gapi.client.calendar.events.delete({
-    //     calendarId: 'primary',
-    //     eventId: eventId,
-    //   });
-    //   request.execute(() => loadGoogleEvents(selectedDay)); // Reload events after deleting
-    // } catch (error) {
-    //   console.error('Error deleting event:', error);
-    // }
+  const handleDeleteEvent = async (eventId: string, eventSource: string) => {
+    try {
+      if (eventSource === 'google') {
+        
+        await deleteGoogleEvent(eventId);
+      } else if (eventSource === 'outlook') {
+        if (accessToken) {
+          await deleteOutlookEvent(eventId, accessToken);
+        } else {
+          throw new Error('Access token for Outlook is null');
+        }
+      }
+      loadEvents();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+    }
   };
+  
 
-  const handleAddButton = () => {
+  const handleAddButton = (start?: Date, end?: Date) => {
+    if (start && end)
+    {
+    setModalStartTime(format(start, 'HH:mm'));
+    setModalEndTime(format(end, 'HH:mm'));
+    }
+    else{
+      setModalStartTime("");
+    setModalEndTime("");
+    }
     setIsModalOpen(true);
   };
 
@@ -184,7 +190,7 @@ export default function CalendarApp() {
             />
             <AddEventButton handleAddButton={handleAddButton} />
           </div>
-          <EventList events={filteredEvents} selectedDay={selectedDay} handleDeleteEvent={handleDeleteEvent} loading={loading} />
+          <EventList events={filteredEvents} selectedDay={selectedDay} handleDeleteEvent={handleDeleteEvent} loading={loading} handleAddButton={handleAddButton} />
         </div>
         {isModalOpen && (
           <div
@@ -198,6 +204,8 @@ export default function CalendarApp() {
               <EventModal
                 onClose={() => setIsModalOpen(false)}
                 onSubmit={handleAddEvent}
+                start = {modalStartTime}
+                end = {modalEndTime}
               />
             </div>
           </div>

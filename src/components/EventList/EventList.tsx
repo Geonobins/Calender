@@ -1,18 +1,19 @@
 import { useState } from 'react';
-import { format, parseISO, isAfter, startOfHour, addHours, isBefore, isEqual, endOfHour } from 'date-fns';
+import { format, parseISO, isAfter, startOfHour, addHours, isBefore, endOfHour } from 'date-fns';
 import { CalendarEvent } from '../Calendar/types/CalendarEvent';
-import { Loader2, ToggleLeftIcon, Trash2, ViewIcon } from 'lucide-react';
+import { Loader2, Trash2, ViewIcon } from 'lucide-react';
 import clsx from 'clsx'; // For conditional classes
 import { formatTimeSlot } from '../utils';
 
 interface EventListProps {
   selectedDay: Date;
   events: CalendarEvent[];
-  handleDeleteEvent: (eventId: string) => void;
+  handleDeleteEvent: (eventId: string, eventSource: string) => void;
   loading: boolean;
+  handleAddButton: (start:Date,end:Date) => void;
 }
 
-export const EventList = ({ selectedDay, events, handleDeleteEvent, loading }: EventListProps) => {
+export const EventList = ({ selectedDay, events, handleDeleteEvent, loading, handleAddButton }: EventListProps) => {
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
   const [view, setView] = useState<'list' | 'timeSlot'>('list');
 
@@ -32,10 +33,12 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading }: E
     setExpandedEventId(expandedEventId === eventId ? null : eventId);
   };
 
-  const handleDeleteClick = (eventId: string, e: React.MouseEvent) => {
+  const handleDeleteClick = (eventId: string,eventSource: string,  e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent the click event from bubbling up to the parent
-    handleDeleteEvent(eventId);
+    handleDeleteEvent(eventId, eventSource);
   };
+
+  
 
   // Sort events by start dateTime
   const sortedEvents = [...events].sort((a, b) => {
@@ -73,7 +76,7 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading }: E
              isAfter(eventEndTime, timeSlot.start);
     });
   });
-  console.log("available time :",availableTimeSlots)
+  
   
   
 
@@ -101,9 +104,9 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading }: E
       </h2>
       <h2 className="font-semibold text-gray-900">Available slots:</h2>
       
-        <div className='flex gap-2 flex-wrap'>
+        <div className='flex gap-2 flex-wrap overflow-y-auto max-h-[150px]'>
           {availableTimeSlots.map((slot, index) => (
-            <div key={index} className="p-2 bg-red-100 cursor-pointer hover:bg-red-200  rounded-2xl shadow-sm">
+            <div key={index} className="p-2 bg-red-100 cursor-pointer hover:bg-red-200  rounded-2xl shadow-sm" onClick={()=>handleAddButton(slot.start,slot.end)}>
               {formatTimeSlot(slot)}
             </div>
           ))}
@@ -134,7 +137,11 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading }: E
                 </div>
                 <Trash2
                   className="hover:bg-slate-200 py-1 hover:shadow-md hover:text-red-400 hover:-translate-y-0.5 duration-500 rounded-lg size-[30px]"
-                  onClick={(e) => handleDeleteClick(event.id, e)}
+                  onClick={(e) =>
+                  {
+                     handleDeleteClick(event.id, event.eventSource, e)
+                    }
+                  }
                 />
               </div>
               <div
