@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format, parseISO, isAfter, startOfHour, isBefore, endOfHour, addMinutes, endOfDay } from 'date-fns';
 import { CalendarEvent } from '../Calendar/types/CalendarEvent';
-import { Loader2, Trash2, ViewIcon } from 'lucide-react';
+import { ListIcon, Loader2, Trash2 } from 'lucide-react';
 import clsx from 'clsx'; // For conditional classes
 import { formatTimeSlot } from '../utils';
 
@@ -125,12 +125,14 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading, han
         </div>
 
         <h2 className="font-semibold text-gray-900 flex gap-3 mt-6">
+        <div className='flex-1'>
         Schedule for{' '}
         <time dateTime={format(selectedDay, 'yyyy-MM-dd')}>
           {format(selectedDay, 'MMM dd, yyyy')}
         </time>
-        <button onClick={toggleView} className="mb-4 text-gray-500">
-        <ViewIcon/>
+        </div>
+        <button onClick={toggleView} className="mb-4 text-gray-500 hover:bg-slate-100 hover:-translate-y-0.5 duration-300 rounded-md p-1">
+        <ListIcon/>
       </button>
       </h2>
 
