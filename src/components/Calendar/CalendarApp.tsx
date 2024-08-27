@@ -174,7 +174,7 @@ export default function CalendarApp() {
         </button>
       </div>
   
-      <div className="pt-16 min-w-[90%] h-full  sm:min-h-[600px] px-4 mx-auto sm:px-7 md:max-w-4xl md:px-6 bg-white z-40 border rounded-md shadow-sm">
+      <div className="pt-16 min-w-[90%] h-full  sm:min-h-[600px] px-4 mx-auto sm:px-7 md:max-w-4xl md:px-6 bg-white z-40 border rounded-md shadow-lg">
         <div className="grid grid-cols-1 md:grid-cols-2 md:divide-x md:divide-gray-200 items-center justify-center z-40">
           <div className="md:pr-14 flex flex-col gap-4 rounded-lg p-6 shadow-lg">
             <CalendarHeader

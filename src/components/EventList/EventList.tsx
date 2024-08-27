@@ -124,7 +124,7 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading, han
           ))}
         </div>
 
-        <h2 className="font-semibold text-gray-900 flex gap-3">
+        <h2 className="font-semibold text-gray-900 flex gap-3 mt-6">
         Schedule for{' '}
         <time dateTime={format(selectedDay, 'yyyy-MM-dd')}>
           {format(selectedDay, 'MMM dd, yyyy')}
@@ -135,7 +135,7 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading, han
       </h2>
 
       {view === 'list' ? (
-      <ol className="mt-4 space-y-1 text-sm max-h-[100px] sm:max-h-[200px] leading-6 overflow-y-auto text-gray-500">
+      <ol className=" space-y-1 text-sm max-h-[100px] sm:max-h-[200px] leading-6 overflow-y-auto text-gray-500">
         {sortedEvents.length > 0 ? (
           sortedEvents.map((event) => (
             <li key={event.id} className="flex flex-col space-y-1">
