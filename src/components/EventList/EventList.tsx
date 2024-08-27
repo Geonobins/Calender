@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format, parseISO, isAfter, startOfHour, addHours, isBefore, endOfHour } from 'date-fns';
+import { format, parseISO, isAfter, startOfHour, addHours, isBefore, endOfHour, addMinutes } from 'date-fns';
 import { CalendarEvent } from '../Calendar/types/CalendarEvent';
 import { Loader2, Trash2, ViewIcon } from 'lucide-react';
 import clsx from 'clsx'; // For conditional classes
@@ -17,10 +17,14 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading, han
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
   const [view, setView] = useState<'list' | 'timeSlot'>('list');
 
-  const timeSlots = Array.from({ length: 24 }, (_, index) => ({
-    start: startOfHour(addHours(selectedDay, index)),
-    end: startOfHour(addHours(selectedDay, index + 1)),
-  }));
+  const [timeSlotInterval, setTimeSlotInterval] = useState(60); // Default to 60 minutes
+
+  // Generate time slots based on the selected interval
+  const timeSlots = Array.from({ length: 24 }, (_, index) => {
+    const start = startOfHour(addHours(selectedDay, index));
+    const end = addMinutes(start, timeSlotInterval);
+    return { start, end };
+  });
 
   const toggleView = () => {
     setView(view === 'list' ? 'timeSlot' : 'list');
@@ -102,7 +106,12 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading, han
         <ViewIcon/>
       </button>
       </h2>
-      <h2 className="font-semibold text-gray-900">Available slots:</h2>
+      <div className="font-semibold text-gray-900 flex gap-2 pb-3">Available slots:
+        <button onClick={()=>setTimeSlotInterval(60)}>1hr</button>
+        
+        <button onClick={()=>setTimeSlotInterval(30)}>30 min</button>
+        <button onClick={()=>setTimeSlotInterval(15)}>15 min</button>
+      </div>
       
         <div className='flex gap-2 flex-wrap overflow-y-auto max-h-[150px]'>
           {availableTimeSlots.map((slot, index) => (
