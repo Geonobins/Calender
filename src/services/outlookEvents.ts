@@ -13,45 +13,54 @@ const createGraphClient = (token: string) => {
 export const loadOutlookEvents = async (monthStart: Date, accessToken: string): Promise<CalendarEvent[]> => {
   const graphClient = createGraphClient(accessToken);
   const startDateTime = new Date(monthStart.getFullYear(), monthStart.getMonth(), 1);
-    const endDateTime = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0, 23, 59, 59, 999);
+  const endDateTime = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0, 23, 59, 59, 999);
+
+  let allEvents: CalendarEvent[] = [];
+  let nextPageUrl = `/me/calendarview?startDateTime=${startDateTime.toISOString()}&endDateTime=${endDateTime.toISOString()}`;
 
   try {
-    const response = await graphClient
-      .api('/me/calendarview')
-      .header('Prefer', 'outlook.timezone="Asia/Kolkata"')
-      .header('Accept-Encoding', 'gzip')
-      .query({
-        startDateTime: new Date(startDateTime).toISOString(),
-        endDateTime: new Date(endDateTime).toISOString(),
-      })
-      .get();
-      console.log("response")
+    while (nextPageUrl) {
+      const response = await graphClient
+        .api(nextPageUrl)
+        .header('Prefer', 'outlook.timezone="Asia/Kolkata"')
+        .header('Accept-Encoding', 'gzip')
+        .get();
 
-    return response.value?.map((event: any) => ({
-      id: event.id,
-      summary: event.subject,
-      start: {
-        dateTime: event.start?.dateTime,
-        date: event.start?.date,
-      },
-      end: {
-        dateTime: event.end?.dateTime,
-        date: event.end?.date,
-      },
-      creator: {
-        name: event.organizer?.emailAddress?.name || 'Unknown',
-        email: event.organizer?.emailAddress?.address,
-        photoUrl: OutlookIcon,
-      },
-      description: event.bodyPreview || 'No description provided',
-      location: event.location?.displayName || 'No location provided',
-      eventSource: "outlook"
-    })) || [];
+        console.log("response",response)
+
+      const events = response.value?.map((event: any) => ({
+        id: event.id,
+        summary: event.subject,
+        start: {
+          dateTime: event.start?.dateTime,
+          date: event.start?.date,
+        },
+        end: {
+          dateTime: event.end?.dateTime,
+          date: event.end?.date,
+        },
+        creator: {
+          name: event.organizer?.emailAddress?.name || 'Unknown',
+          email: event.organizer?.emailAddress?.address,
+          photoUrl: OutlookIcon,
+        },
+        description: event.bodyPreview || 'No description provided',
+        location: event.location?.displayName || 'No location provided',
+        eventSource: "outlook"
+      })) || [];
+
+      allEvents = [...allEvents, ...events];
+
+      // Check if there's a next page of events
+      nextPageUrl = response['@odata.nextLink'];
+    }
   } catch (error) {
     console.error('Error fetching Outlook events:', error);
-    return [];
   }
+
+  return allEvents;
 };
+
 
 export const deleteOutlookEvent = async (eventId: string, accessToken: string): Promise<void> => {
   const graphClient = createGraphClient(accessToken);

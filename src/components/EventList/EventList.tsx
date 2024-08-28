@@ -1,9 +1,13 @@
 import { useState } from 'react';
-import { format, parseISO, isAfter, startOfHour, isBefore, endOfHour, addMinutes, endOfDay } from 'date-fns';
+import { format, parseISO, isAfter, startOfHour, isBefore, endOfHour, addMinutes, set } from 'date-fns';
 import { CalendarEvent } from '../Calendar/types/CalendarEvent';
 import { ListIcon, Loader2, Trash2 } from 'lucide-react';
 import clsx from 'clsx'; // For conditional classes
 import { formatTimeSlot } from '../utils';
+
+type Availability = {
+  [key: string]: { from: string; to: string };
+};
 
 interface EventListProps {
   selectedDay: Date;
@@ -11,27 +15,39 @@ interface EventListProps {
   handleDeleteEvent: (eventId: string, eventSource: string) => void;
   loading: boolean;
   handleAddButton: (start:Date,end:Date) => void;
+  availability:Availability
 }
 
-export const EventList = ({ selectedDay, events, handleDeleteEvent, loading, handleAddButton }: EventListProps) => {
+export const EventList = ({ selectedDay, events, handleDeleteEvent, loading, handleAddButton, availability }: EventListProps) => {
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
   const [view, setView] = useState<'list' | 'timeSlot'>('list');
 
   const [timeSlotInterval, setTimeSlotInterval] = useState(60); // Default to 60 minutes
 
   const generateTimeSlots = (interval: number) => {
+    const dayName = format(selectedDay, 'EEEE'); // Get the weekday name
+    const { from, to } = availability[dayName]; // Get from and to times
+  
     const slots = [];
-    let currentTime = startOfHour(selectedDay); // Start from the beginning of the selected day
-    console.log("endofhr",endOfDay(selectedDay))
-    // Generate slots for the entire day
-    while (currentTime < endOfDay(selectedDay)) {
-      const endTime = addMinutes(currentTime, interval);
-      slots.push({ start: currentTime, end: endTime });
-      currentTime = endTime; // Move to the next slot
+    let currentTime = set(selectedDay, {
+      hours: parseInt(from.split(":")[0]),
+      minutes: parseInt(from.split(":")[1]),
+    });
+    const endTime = set(selectedDay, {
+      hours: parseInt(to.split(":")[0]),
+      minutes: parseInt(to.split(":")[1]),
+    });
+  
+    // Generate slots between the from and to times
+    while (currentTime < endTime) {
+      const nextSlotTime = addMinutes(currentTime, interval);
+      slots.push({ start: currentTime, end: nextSlotTime });
+      currentTime = nextSlotTime; // Move to the next slot
     }
-
+  
     return slots;
   };
+  
 
   const timeSlots = generateTimeSlots(timeSlotInterval); 
 

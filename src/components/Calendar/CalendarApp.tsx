@@ -15,7 +15,13 @@ import { initializeGapi } from '../../services/gapiClient';
 import { handleGoogleLogin, handleOutlookLogin } from '../../services/authUtils'; 
 import { loadGoogleEvents, deleteGoogleEvent, addEventToGoogle } from '../../services/googleEvents';
 import { loadOutlookEvents, deleteOutlookEvent, addEventToOutlook } from '../../services/outlookEvents';
+import { Settings } from 'lucide-react';
+import { AvailabilityFilter } from '../AvailabilityFilter/AvailabilityFilter';
 
+
+type Availability = {
+  [key: string]: { from: string; to: string };
+};
 
 export default function CalendarApp() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -30,8 +36,21 @@ export default function CalendarApp() {
   const [loading, setLoading] = useState(false);
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]); // State for filtered events
 
+  const [isFilterOpen, setFilterOpen] = useState(false)
+
   const [modalStartTime,setModalStartTime] = useState<string>('');
   const [modalEndTime,setModalEndTime] = useState<string>('');
+
+  const [availability, setAvailability] = useState<Availability>({
+    Sunday: { from: "08:00", to: "17:00" },
+    Monday: { from: "08:00", to: "17:00" },
+    Tuesday: { from: "08:00", to: "17:00" },
+    Wednesday: { from: "08:00", to: "17:00" },
+    Thursday: { from: "08:00", to: "17:00" },
+    Friday: { from: "08:00", to: "17:00" },
+    Saturday: { from: "08:00", to: "17:00" },
+  });
+
 
   const CLIENT_ID = process.env.CLIENT_ID!;
   const API_KEY = process.env.API_KEY!;
@@ -154,7 +173,12 @@ export default function CalendarApp() {
     setIsModalOpen(true);
   };
 
+  const handleCloseFilter =() =>{
+    setFilterOpen(false)
+  }
+
   return (
+    <div>
     <div className='w-screen min-h-full flex flex-col items-center justify-center'>
       <div className="absolute top-4 right-4 flex space-x-2 z-50">
         <button className="btn btn-primary hover:-translate-y-0.5 duration-300" onClick={() => handleGoogleLogin(setIsGoogleSignedIn, loadGoogleEvents, selectedDay)}>
@@ -190,8 +214,11 @@ export default function CalendarApp() {
             />
             <AddEventButton handleAddButton={handleAddButton} />
           </div>
-          <div className=' h-full'>
-          <EventList events={filteredEvents} selectedDay={selectedDay} handleDeleteEvent={handleDeleteEvent} loading={loading} handleAddButton={handleAddButton} />
+          <div className=' h-full flex flex-col'>
+            <div className='flex w-full justify-end items-end text-gray-600 p-2 cursor-pointer' onClick={()=>{setFilterOpen(true)}}>
+            <Settings />
+            </div>
+          <EventList events={filteredEvents} selectedDay={selectedDay} handleDeleteEvent={handleDeleteEvent} loading={loading} handleAddButton={handleAddButton} availability={availability} />
           </div>
         </div>
         {isModalOpen && (
@@ -213,6 +240,8 @@ export default function CalendarApp() {
           </div>
         )}
       </div>
+    </div>
+    <AvailabilityFilter handleCloseFilter={handleCloseFilter} isFilterOpen={isFilterOpen} availability={availability} setAvailability={setAvailability} />
     </div>
   );
 }
