@@ -6,7 +6,7 @@ import clsx from 'clsx'; // For conditional classes
 import { formatTimeSlot } from '../utils';
 
 type Availability = {
-  [key: string]: { from: string; to: string };
+  [key: string]: { from: string; to: string }[];
 };
 
 interface EventListProps {
@@ -26,27 +26,39 @@ export const EventList = ({ selectedDay, events, handleDeleteEvent, loading, han
 
   const generateTimeSlots = (interval: number) => {
     const dayName = format(selectedDay, 'EEEE'); // Get the weekday name
-    const { from, to } = availability[dayName]; // Get from and to times
+    const dayIntervals = availability[dayName]; // Get intervals for the day
   
-    const slots = [];
-    let currentTime = set(selectedDay, {
-      hours: parseInt(from.split(":")[0]),
-      minutes: parseInt(from.split(":")[1]),
-    });
-    const endTime = set(selectedDay, {
-      hours: parseInt(to.split(":")[0]),
-      minutes: parseInt(to.split(":")[1]),
-    });
+    const slots: { start: Date; end: Date; }[] = [];
   
-    // Generate slots between the from and to times
-    while (currentTime < endTime) {
-      const nextSlotTime = addMinutes(currentTime, interval);
-      slots.push({ start: currentTime, end: nextSlotTime });
-      currentTime = nextSlotTime; // Move to the next slot
-    }
+    // Iterate over each interval for the day
+    dayIntervals.forEach(({ from, to }) => {
+      let currentTime = set(selectedDay, {
+        hours: parseInt(from.split(":")[0]),
+        minutes: parseInt(from.split(":")[1]),
+      });
+  
+      let endTime = set(selectedDay, {
+        hours: parseInt(to.split(":")[0]),
+        minutes: parseInt(to.split(":")[1]),
+      });
+  
+      // Ensure that start time is always before end time
+      if (isAfter(currentTime, endTime)) {
+        endTime = addMinutes(currentTime, interval);
+      }
+  
+      // Generate slots for each interval
+      while (isBefore(currentTime, endTime)) {
+        const nextSlotTime = addMinutes(currentTime, interval);
+        if (isAfter(nextSlotTime, endTime)) break;
+        slots.push({ start: currentTime, end: nextSlotTime });
+        currentTime = nextSlotTime;
+      }
+    });
   
     return slots;
   };
+  
   
 
   const timeSlots = generateTimeSlots(timeSlotInterval); 

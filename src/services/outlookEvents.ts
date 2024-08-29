@@ -17,7 +17,7 @@ export const loadOutlookEvents = async (monthStart: Date, accessToken: string): 
 
   let allEvents: CalendarEvent[] = [];
   let nextPageUrl = `/me/calendarview?startDateTime=${startDateTime.toISOString()}&endDateTime=${endDateTime.toISOString()}`;
-
+  
   try {
     while (nextPageUrl) {
       const response = await graphClient

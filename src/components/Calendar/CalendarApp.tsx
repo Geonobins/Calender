@@ -20,7 +20,7 @@ import { AvailabilityFilter } from '../AvailabilityFilter/AvailabilityFilter';
 
 
 type Availability = {
-  [key: string]: { from: string; to: string };
+  [key: string]: { from: string; to: string }[];
 };
 
 export default function CalendarApp() {
@@ -42,13 +42,13 @@ export default function CalendarApp() {
   const [modalEndTime,setModalEndTime] = useState<string>('');
 
   const [availability, setAvailability] = useState<Availability>({
-    Sunday: { from: "08:00", to: "17:00" },
-    Monday: { from: "08:00", to: "17:00" },
-    Tuesday: { from: "08:00", to: "17:00" },
-    Wednesday: { from: "08:00", to: "17:00" },
-    Thursday: { from: "08:00", to: "17:00" },
-    Friday: { from: "08:00", to: "17:00" },
-    Saturday: { from: "08:00", to: "17:00" },
+    Sunday: [{ from: "08:00", to: "17:00" }],
+    Monday: [{ from: "08:00", to: "17:00" }],
+    Tuesday: [{ from: "08:00", to: "17:00" }],
+    Wednesday: [{ from: "08:00", to: "17:00" }],
+    Thursday: [{ from: "08:00", to: "17:00" }],
+    Friday: [{ from: "08:00", to: "17:00" }],
+    Saturday: [{ from: "08:00", to: "17:00" }],
   });
 
 
@@ -158,8 +158,9 @@ export default function CalendarApp() {
       console.error('Error deleting event:', error);
     }
   };
-  
+//-----------------Optimistically adding and deleting Events-----------------------------------------------------  
 
+//----------------------------------------------------------------------------------------------------------------
   const handleAddButton = (start?: Date, end?: Date) => {
     if (start && end)
     {

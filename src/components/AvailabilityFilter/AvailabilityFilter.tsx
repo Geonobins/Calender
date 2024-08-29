@@ -1,9 +1,10 @@
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
+import { MinusIcon, PlusIcon } from "lucide-react";
 
 
 type Availability = {
-    [key: string]: { from: string; to: string };
+    [key: string]: { from: string; to: string }[];
   };
 
 type AvailabilityFilterProps = {
@@ -20,17 +21,32 @@ export const AvailabilityFilter = ({ isFilterOpen, handleCloseFilter,availabilit
 
   
 
-  const handleTimeChange = (day: string, timeType: "from" | "to", value: string) => {
+  const handleTimeChange = (day: string, index: number, timeType: "from" | "to", value: string) => {
     const updatedAvailability = {
       ...availability,
-      [day]: {
-        ...availability[day],
-        [timeType]: value,
-      },
+      [day]: availability[day].map((interval, i) =>
+        i === index ? { ...interval, [timeType]: value } : interval
+      ),
     };
     setAvailability(updatedAvailability);
-    
   };
+
+  const addInterval = (day: string) => {
+    const updatedAvailability = {
+      ...availability,
+      [day]: [...availability[day], { from: "", to: "" }],
+    };
+    setAvailability(updatedAvailability);
+  };
+  
+  const removeInterval = (day: string, index: number) => {
+    const updatedAvailability = {
+      ...availability,
+      [day]: availability[day].filter((_, i) => i !== index),
+    };
+    setAvailability(updatedAvailability);
+  };
+  
 
   return (
     <Dialog open={isFilterOpen} onClose={handleCloseFilter} className="relative z-50">
@@ -72,22 +88,32 @@ export const AvailabilityFilter = ({ isFilterOpen, handleCloseFilter,availabilit
                           <label htmlFor={day} className="text-gray-700 font-semibold">
                             {day}
                           </label>
-                          <div className="flex gap-2 mt-2">
-                            <input
-                              type="time"
-                              id={`${day}-from`}
-                              value={availability[day].from}
-                              onChange={(e) => handleTimeChange(day, "from", e.target.value)}
-                              className="border border-gray-300 rounded p-2"
-                            />
-                            <input
-                              type="time"
-                              id={`${day}-to`}
-                              value={availability[day].to}
-                              onChange={(e) => handleTimeChange(day, "to", e.target.value)}
-                              className="border border-gray-300 rounded p-2"
-                            />
-                          </div>
+                          {availability[day].map((interval, index) => (
+                            <div key={index} className="flex gap-2 mt-2">
+                              <input
+                                type="time"
+                                id={`${day}-from-${index}`}
+                                value={interval.from}
+                                onChange={(e) => handleTimeChange(day, index, "from", e.target.value)}
+                                className="border border-gray-300 rounded p-2"
+                              />
+                              <input
+                                type="time"
+                                id={`${day}-to-${index}`}
+                                value={interval.to}
+                                onChange={(e) => handleTimeChange(day, index, "to", e.target.value)}
+                                className="border border-gray-300 rounded p-2"
+                              />
+                              <MinusIcon
+                                className="border-2 text-slate-300 mt-2 rounded-md cursor-pointer"
+                                onClick={() => removeInterval(day, index)}
+                              />
+                            </div>
+                          ))}
+                          <PlusIcon
+                            className="border-2 text-slate-300 mt-2 rounded-md cursor-pointer"
+                            onClick={() => addInterval(day)}
+                          />
                         </div>
                       ))}
                     </div>
